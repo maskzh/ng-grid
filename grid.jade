@@ -1,0 +1,50 @@
+//- operation
+.grid-operation
+  .btn-group.grid-buttons
+    a.btn.btn-default(ng-if="vm.operation.add" href="{{vm.api.addHref}}") 添加
+    button.btn.btn-danger(ng-if="vm.operation.delete" type="button" ng-click="vm.delete()") 删除
+  .form-inline.grid-search(ng-if="vm.operation.search")
+    .form-group
+      label.sr-only(for="search") 搜索
+      input#search.form-control(ng-model="vm.query" type="text" placeholder="输入您要搜索的关键字" ng-keyup="vm.search(vm.query)")
+
+//- tab
+.grid-tabs(ng-if="vm.tabs")
+  tabset(type="tags")
+    tab(heading="{{tab.title}}" active="tab.active" disable="tab.disabled" ng-click="vm.switchTab(tab.query)" ng-repeat="tab in vm.tabs")
+
+.grid-tabs(ng-if="vm.tabs2")
+  tabset(type="pills")
+    tab(heading="{{tab.title}}" active="tab.active" disable="tab.disabled" ng-click="vm.switchTab(tab.query)" ng-repeat="tab in vm.tabs2")
+
+//- table
+.grid-list
+  table.table.table-hover
+    thead
+      tr
+        th
+          input(type="checkbox")
+        th(ng-repeat="th in vm.ths") {{th}}
+    tbody
+      tr(ng-repeat="item in vm.list")
+        th
+          input(type="checkbox" value="{{item.id}}")
+        td(ng-repeat="value in item track by $index" ng-bind-html="value")
+  .grid-loading(ng-if="vm.isLoading")
+    i.fa.fa-circle-o-notch.fa-spin
+  .grid-nodata(ng-if="vm.isNoData") 暂无数据
+  .grid-error(ng-if="vm.isError") 请求出现错误，
+    a(href="javascript:;" ng-click="vm.reload()") 重试
+
+//- pagination
+.grid-pagination
+  pagination(
+    total-items="vm.totalItems"
+    items-per-page="10"
+    ng-model="vm.currentPage"
+    max-size="5"
+    rotate="false"
+    previous-text="前页"
+    next-text="后页"
+    ng-change="vm.pageChanged()"
+  )

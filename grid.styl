@@ -1,0 +1,57 @@
+.grid-operation
+  clearfix()
+  margin 15px 0
+
+  .grid-buttons
+    float left
+
+  .grid-search
+    width 172px
+    float right
+
+.grid-tabs
+  margin 15px 0 0
+  .nav-pills
+    margin-left 8px
+  .nav-pills > li > a
+    font-size 12px
+    padding 5px 8px
+    color $gray-light
+  .nav-pills > li.active > a
+    background-color transparent
+    color $brand-primary
+
+.grid-list
+  position relative
+  margin 15px 0 0
+  min-height 200px
+
+.grid-pagination
+  text-align right
+
+.grid-loading, .grid-nodata,.grid-error
+  position absolute
+  top 0
+  width 100%
+  height 200px
+  text-align center
+
+
+.grid-loading
+  color $jkbs-primary
+  font-size 32px
+  padding-top 120px
+
+.grid-nodata
+  padding-top 140px
+
+.grid-error
+  padding-top 140px
+
+.J_image
+  position absolute
+  box-shadow 0 0 1px 1px #f1f1f1
+  transition transform .2s ease
+  &.on
+    z-index 2
+    transform scale(5)
