@@ -1,8 +1,12 @@
 //- operation
 .grid-operation
   .btn-group.grid-buttons
-    a.btn.btn-default(ng-if="vm.operation.add" href="{{vm.api.addHref}}") 添加
-    button.btn.btn-danger(ng-if="vm.operation.delete" type="button" ng-click="vm.delete()") 删除
+    a.btn.btn-default.btn-sm(ng-if="vm.operation.add" href="{{vm.api.addHref}}") <i class="fa fa-plus"></i> 添加
+    //- button.btn.btn-danger.btn-sm(ng-if="vm.operation.delete" ng-disabled="!vm.selectedItems.length" type="button" ng-click="vm.delete()")  <i class="fa fa-trash"></i> 删除
+    
+  .btn-group.grid-buttons
+    button(class="btn btn-sm btn-{{item[0]}}" ng-disabled="!vm.selectedItems.length" type="button" ng-click="vm[item[1]]()" ng-repeat="item in vm.btns") {{item[2]}}
+
   .form-inline.grid-search(ng-if="vm.operation.search")
     .form-group
       label.sr-only(for="search") 搜索
@@ -26,9 +30,9 @@
           input(type="checkbox")
         th(ng-repeat="th in vm.ths") {{th}}
     tbody
-      tr(ng-repeat="item in vm.list")
+      tr(ng-repeat="item in vm.htmlList")
         th
-          input(type="checkbox" value="{{item.id}}")
+          input(type="checkbox" value="{{$index}}")
         td(ng-repeat="value in item track by $index" ng-bind-html="value")
   .grid-loading(ng-if="vm.isLoading")
     i.fa.fa-circle-o-notch.fa-spin
