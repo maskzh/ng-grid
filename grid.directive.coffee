@@ -130,16 +130,6 @@ angular.module 'jkbs'
       vm.pageChanged = () ->
         getList vm.currentListApi, angular.extend sendData, {page: vm.currentPage}
 
-      # 导入
-      vm.importItems = (url, selectedItems) ->
-        return false if selectedItems.length is 0
-        ids = []
-        for item in selectedItems
-          ids.push item.id
-        Util.post url, {ids: ids.join(','), shop_id: Shop.get()}
-          .then (res) ->
-            toastr.success '添加成功'
-
       # 根据字段搜索并加载数据
       _timer = null # 搜索时keyup定时器
       vm.search = (keyword) ->
@@ -156,9 +146,6 @@ angular.module 'jkbs'
       # 删除多个
       vm.delete = () ->
         vm.deleteItems vm.api.delete, vm.selectedItems
-
-      vm.import = ->
-        vm.importItems vm.api.import, vm.selectedItems
 
       return
 
