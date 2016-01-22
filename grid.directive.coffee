@@ -5,7 +5,7 @@ angular.module 'jkbs'
       vm = this
       # 数据和分页
       vm.list = []
-      vm.htmlList = []
+      vm.parsedList = []
       vm.currentPage = 1
       vm.totalItems = 0
 
@@ -16,7 +16,7 @@ angular.module 'jkbs'
 
       # 其它字段
       vm.currentListApi = '' # 当前请求的地址
-      vm.operation = null
+      vm.available = null
       vm.ths = [] # 表头的标题们
       vm.selectedItems = [] # 被选中的条目
 
@@ -41,8 +41,9 @@ angular.module 'jkbs'
       # 请求发送的数据
       sendData = {page: 1, 'per-page': 10}
       resetSendData = ->
-        vm.tabs && vm.tabs[0].active = true
-        vm.tabs2 && vm.tabs2[0].active = true
+        if vm.tabs
+          for tabs in vm.tabs
+            tabs[0].active = true
         sendData = {page: 1, 'per-page': 10}
 
       # 根据提供的 表格table 处理数据
@@ -77,12 +78,13 @@ angular.module 'jkbs'
           .then (res)->
             if !res.data.items or res.data.items.length is 0
               vm.list = []
+              vm.parsedList = []
               status.noData()
               return
 
             # 赋值
             vm.list = res.data.items
-            vm.htmlList = handleList res.data.items, vm.table
+            vm.parsedList = handleList res.data.items, vm.table
             vm.currentPage = (res.data._meta and res.data._meta.currentPage) || 1
             vm.totalItems = (res.data._meta and res.data._meta.totalCount) || 0
             status.hide()
@@ -98,28 +100,16 @@ angular.module 'jkbs'
           result.push map.text
         result
 
-      # 删除某一个条目
-      vm.deleteItem = (url, id) ->
-        if confirm '确定删除该条目？'
-          Util.delete "#{url}/#{id}", {id: id}
-            .then (res) ->
-              toastr.success '删除成功'
-              vm.pageChanged()
-
       # 删除多个条目
-      vm.deleteItems = (url, selectedItems) ->
-        return false if selectedItems.length is 0
-        ids = []
-        for item in selectedItems
-          ids.push item.id
-        if confirm(if selectedItems.length > 1 then '确定删除多个条目？' else '确定删除该条目？')
+      vm.deleteItems = (url, ids) ->
+        if confirm(if ids.length > 1 then '确定删除多个条目？' else '确定删除该条目？')
           Util.delete url, {ids: ids.join(',')}
             .then (res) ->
               toastr.success '删除成功'
               vm.pageChanged()
 
       # tab 切换
-      vm.switchTab = (query) ->
+      vm.query = (query) ->
         if vm.currentListApi isnt vm.api.list
           resetSendData()
         sendData.page = 1
@@ -143,73 +133,98 @@ angular.module 'jkbs'
       vm.reload = () ->
         vm.pageChanged()
 
-      # 删除多个
-      vm.delete = () ->
-        vm.deleteItems vm.api.delete, vm.selectedItems
+      # 删除
+      vm.delete = (index) ->
+        ids = []
+        if index?
+          ids.push vm.list[index].id
+        else
+          return if vm.selectedItems.length is 0
+          for item in vm.selectedItems
+            ids.push item.id
+        vm.deleteItems vm.api.delete, ids
 
       return
 
     handleApi = (api) ->
       throw new Error "api and api.base must be set" if !api? or !api.base?
       apiTmp = {}
-      apiTmp.list = if api.list? then "#{api.base}/#{api.list}" else api.base
-      apiTmp.search = if api.search? then "#{api.base}/#{api.search}" else "#{api.base}/search"
-      apiTmp.delete = if api.delete? then "#{api.base}/#{api.delete}" else api.base
-      apiTmp.addHref = if api.addHref? then "##{api.addHref}/new" else "##{api.base}/new"
-      apiTmp.import = api.import
+      apiTmp.list = if api.list? then "#{api.base}/#{api.list.replace(/^\//, '')}" else api.base
+      apiTmp.search = if api.search? then "#{api.base}/#{api.search.replace(/^\//, '')}" else "#{api.base}/search"
+      apiTmp.delete = if api.delete? then "#{api.base}/#{api.delete.replace(/^\//, '')}" else "#{api.base}/more-delete"
+      apiTmp.routing = if api.routing? then "#/#{api.routing.replace(/^\//, '')}" else "##{api.base}"
+      apiTmp.addrouter = "#{apiTmp.routing}/new"
       apiTmp
 
-    handleOperation = (operation) ->
-      if !operation?
+    handleAvailable = (available) ->
+      if !available?
         return {
           add: true
           delete: true
           search: true
-          import: false
+          checkbox: true
+          pagination: true
         }
       a = {}
-      os = operation.split(' ')
+      os = available.split(' ')
       for o in os
         a[o] = true
       a
 
-    handleBtns = (btns, scope, el, attr, vm) ->
-      genBtnsHandleName = do ->
+    isArray = (obj) ->
+      Object.prototype.toString.call(obj) is '[object Array]'
+
+    genHandleButtons = (s) ->
+      genButtonsHandleName = do ->
         i = 0
         return ->
           i++
-          'btns' + i
+          s + i
+      (buttons, scope, el, attr, vm) ->
+        return unless buttons?
+        throw new Error 'buttons must be array' unless isArray buttons
+        tmp = []
+        for button in buttons
+          if button.handle?
+            fnName = genButtonsHandleName()
+            vm[fnName] = button.handle.bind(vm, scope, el, attr, vm)
+            extra = {handle: fnName}
+          tmp.push angular.extend {}, button, extra
+        tmp
+    handleButtons = genHandleButtons('buttons')
+    handleBtns = genHandleButtons('btns')
 
-      tmp = []
-      for item in btns
-        fnName = genBtnsHandleName()
-        vm[fnName] = item.handle.bind(vm, scope, el, attr, vm)
-        tmp.push [item.type, fnName, item.text]
+    handleTabs = (tabs) ->
+      return unless tabs?
+      throw new Error 'tabs must be array' unless isArray tabs
+      return [tabs] unless isArray tabs[0]
+      tabs
 
-      tmp
-
-    handleEvents = (events, el) ->
+    handleEvents = (events, scope, el, attr, vm) ->
       return if !events?
-      for event in events
-        el.on event.type, event.selector, event.fn
+      for e in events
+        el.on e.type, e.selector, (evt) ->
+          e.handle evt, this, scope, el, attr, vm
       return
 
     linkFunc = (scope, el, attr, vm) ->
       throw new Error 'must set grid in controller' if !scope.grid?
       vm.api = handleApi scope.grid.api
-      vm.operation = handleOperation scope.grid.operation
-      vm.btns = handleBtns scope.grid.btns, scope, el, attr, vm if scope.grid.btns?
-      vm.tabs = scope.grid.tabs
-      vm.tabs2 = scope.grid.tabs2
+      vm.available = handleAvailable scope.grid.available
+      vm.buttons = handleButtons scope.grid.buttons, scope, el, attr, vm
+      vm.btns = handleBtns scope.grid.btns, scope, el, attr, vm
+      vm.tabs = handleTabs scope.grid.tabs
       vm.table = scope.grid.table
 
       # init
       vm.ths = vm.getThs(vm.table)
-      vm.currentListApi = vm.api.list
-      vm.reload()
-
-      # 绑定事件
-      handleEvents scope.grid.events
+      initQuery = {}
+      if vm.tabs?
+        for tabs in vm.tabs
+          for tab in tabs
+            if tab.active is true
+              angular.extend initQuery, tab.query
+      vm.query(initQuery)
 
       updateSelectedItems = ->
         vm.selectedItems = []
@@ -247,7 +262,7 @@ angular.module 'jkbs'
         scope.$apply()
 
       el.on 'click', '.J_delete', (e) ->
-        vm.deleteItem vm.api.delete, $(this).attr 'alt'
+        vm.deleteItems vm.api.delete, [$(this).data 'id']
 
       el.on 'mouseenter', '.J_image', (e) ->
         $(this).addClass 'on'
@@ -255,7 +270,9 @@ angular.module 'jkbs'
       el.on 'mouseleave', '.J_image', (e) ->
         $(this).removeClass 'on'
 
-      scope.grid.callback && scope.grid.callback scope, el, attr, vm
+      # 绑定事件
+      handleEvents scope.grid.events, scope, el, attr, vm if scope.grid.events?
+      scope.grid.callback && scope.grid.callback(scope, el, attr, vm)
 
       scope.$on '$destroy', ->
         el.off()
