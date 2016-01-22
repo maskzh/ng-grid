@@ -1,47 +1,44 @@
-//- operation
-.grid-operation
+//- buttuns
+.grid-header
   .btn-group.grid-buttons
-    a.btn.btn-default.btn-sm(ng-if="vm.operation.add" href="{{vm.api.addHref}}") <i class="fa fa-plus"></i> 添加
-    //- button.btn.btn-danger.btn-sm(ng-if="vm.operation.delete" ng-disabled="!vm.selectedItems.length" type="button" ng-click="vm.delete()")  <i class="fa fa-trash"></i> 删除
-    
-  .btn-group.grid-buttons
-    button(class="btn btn-sm btn-{{item[0]}}" ng-disabled="!vm.selectedItems.length" type="button" ng-click="vm[item[1]]()" ng-repeat="item in vm.btns") {{item[2]}}
+    a.btn.btn-default.btn-sm(ng-if="vm.available.add" href="{{vm.api.addrouter}}") <i class="fa fa-plus"></i> 添加
+    a.btn.btn-sm(ng-repeat="btn in vm.buttons" href="{{btn.href||'javascript:;'}}" class="btn-{{btn.type}}" ng-disabled="!vm.selectedItems.length && btn.handle" ng-click="btn.handle && vm[btn.handle]()") {{btn.text}}
+    button.btn.btn-danger.btn-sm(ng-if="vm.available.delete" ng-disabled="!vm.selectedItems.length" type="button" ng-click="vm.delete()")  <i class="fa fa-trash"></i> 删除
 
-  .form-inline.grid-search(ng-if="vm.operation.search")
+  .form-inline.grid-search(ng-if="vm.available.search")
     .form-group
       label.sr-only(for="search") 搜索
-      input#search.form-control(ng-model="vm.query" type="text" placeholder="输入您要搜索的关键字" ng-keyup="vm.search(vm.query)")
+      input#search.form-control(ng-model="vm.keyword" type="text" placeholder="输入您要搜索的关键字" ng-keyup="vm.search(vm.keyword)")
 
-//- tab
-.grid-tabs(ng-if="vm.tabs")
-  tabset(type="tags")
-    tab(heading="{{tab.title}}" active="tab.active" disable="tab.disabled" ng-click="vm.switchTab(tab.query)" ng-repeat="tab in vm.tabs")
+//- tab 选项卡区
+.grid-tabs(ng-repeat="tabs in vm.tabs")
+  tabset(type="{{$index === 0 ? 'tags' : 'pills'}}")
+    tab(heading="{{tab.text}}" active="tab.active" disable="tab.disabled" ng-click="vm.query(tab.query)" ng-repeat="tab in tabs")
 
-.grid-tabs(ng-if="vm.tabs2")
-  tabset(type="pills")
-    tab(heading="{{tab.title}}" active="tab.active" disable="tab.disabled" ng-click="vm.switchTab(tab.query)" ng-repeat="tab in vm.tabs2")
-
-//- table
+//- table 列表区
 .grid-list
   table.table.table-hover
     thead
       tr
-        th
+        th(ng-if="vm.available.checkbox")
           input(type="checkbox")
         th(ng-repeat="th in vm.ths") {{th}}
     tbody
-      tr(ng-repeat="item in vm.htmlList")
-        th
+      tr(ng-repeat="item in vm.parsedList")
+        th(ng-if="vm.available.checkbox")
           input(type="checkbox" value="{{$index}}")
-        td(ng-repeat="value in item track by $index" ng-bind-html="value")
+        td(ng-repeat="value in item track by $index" ng-bind-html="''+value | to_trusted")
+        
+
+  //- status 状态显示
   .grid-loading(ng-if="vm.isLoading")
     i.fa.fa-circle-o-notch.fa-spin
   .grid-nodata(ng-if="vm.isNoData") 暂无数据
   .grid-error(ng-if="vm.isError") 请求出现错误，
     a(href="javascript:;" ng-click="vm.reload()") 重试
 
-//- pagination
-.grid-pagination
+//- pagination 分页
+.grid-pagination(ng-if="vm.available.pagination")
   pagination(
     total-items="vm.totalItems"
     items-per-page="10"
