@@ -16,6 +16,7 @@ angular.module 'jkbs'
 
       # 其它字段
       vm.currentListApi = '' # 当前请求的地址
+      vm.currentQuery = ''
       vm.available = null
       vm.ths = [] # 表头的标题们
       vm.selectedItems = [] # 被选中的条目
@@ -72,6 +73,7 @@ angular.module 'jkbs'
       getList = (url, data) ->
         # reset
         vm.selectedItems = []
+        vm.updateCheckedAll()
         status.loading()
 
         Util.get url, data
@@ -115,6 +117,7 @@ angular.module 'jkbs'
         sendData.page = 1
         getList vm.api.list, angular.extend sendData, query
         vm.currentListApi = vm.api.list
+        vm.currentQuery = query
 
       # 页码修改，重新请求
       vm.pageChanged = () ->
@@ -143,6 +146,10 @@ angular.module 'jkbs'
           for item in vm.selectedItems
             ids.push item.id
         vm.deleteItems vm.api.delete, ids
+
+      # 更新全选状态
+      vm.updateCheckedAll = ->
+        vm.checkedAll = vm.selectedItems.length and (vm.selectedItems.length is vm.list.length)
 
       return
 
@@ -259,6 +266,7 @@ angular.module 'jkbs'
           for item, i in vm.selectedItems
             if vm.list[parseInt($(this).val())].id is item.id
               vm.selectedItems.splice i, 1
+        vm.updateCheckedAll()
         scope.$apply()
 
       el.on 'click', '.J_delete', (e) ->
