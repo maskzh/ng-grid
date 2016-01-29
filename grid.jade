@@ -2,7 +2,7 @@
 .grid-header
   .btn-group.grid-buttons
     a.btn.btn-default.btn-sm(ng-if="vm.available.add" href="{{vm.api.addrouter}}") <i class="fa fa-plus"></i> 添加
-    a.btn.btn-sm(ng-repeat="btn in vm.buttons" href="{{btn.href||'javascript:;'}}" class="btn-{{btn.type}}" ng-disabled="!vm.selectedItems.length && btn.handle" ng-click="btn.handle && vm[btn.handle]()") {{btn.text}}
+    a.btn.btn-sm(ng-repeat="btn in vm.buttons" href="{{btn.href||'javascript:;'}}" class="btn-{{btn.type}}" ng-disabled="btn.disabled || (btn.disabled===undefined)&&!vm.selectedItems.length && btn.handle" ng-click="btn.handle && vm[btn.handle]()") {{btn.text}}
     button.btn.btn-danger.btn-sm(ng-if="vm.available.delete" ng-disabled="!vm.selectedItems.length" type="button" ng-click="vm.delete()")  <i class="fa fa-trash"></i> 删除
 
   .form-inline.grid-search(ng-if="vm.available.search")
@@ -21,7 +21,7 @@
     thead
       tr
         th(ng-if="vm.available.checkbox")
-          input(type="checkbox")
+          input(type="checkbox" ng-model="vm.checkedAll")
         th(ng-repeat="th in vm.ths") {{th}}
     tbody
       tr(ng-repeat="item in vm.parsedList")
